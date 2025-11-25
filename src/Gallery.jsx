@@ -1,12 +1,12 @@
 import axios from "axios";
 import React from "react";
-import { useQuery } from "react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useGlobalContext } from "./context";
+
 function Gallery() {
   const { searchValue } = useGlobalContext();
-  const url = `https://api.unsplash.com/search/photos/?client_id=${
-    import.meta.env.VITE_API_KEP
-  }`;
+  const apiKey = import.meta.env.VITE_API_KEY || import.meta.env.VITE_API_KEP;
+  const url = `https://api.unsplash.com/search/photos/?client_id=${apiKey}`;
   const response = useQuery({
     queryKey: ["images", searchValue],
     queryFn: async () => {
@@ -37,30 +37,23 @@ function Gallery() {
       </div>
     );
   }
-  if (response.data.length < 1) {
+  if (!response.data || (response.data.results && response.data.results.length < 1)) {
     return (
       <div className="container">
-        <p>resumt not found...</p>
+        <p>result not found...</p>
       </div>
     );
   }
+
   return (
     <div className="container">
       <div className="content">
-        {response.data.results.map((image) => {
-          const {
-            id,
-            urls: { small_s3: img },
-            alt_description,
-          } = image;
+        {response.data?.results?.map((image) => {
+          const { id, urls = {}, alt_description } = image;
+          const img = urls.small || urls.small_s3 || urls.thumb || "";
           return (
-            <div className="content-img">
-              <img
-                src={img}
-                key={id}
-                className="fit-img"
-                alt={alt_description}
-              />
+            <div className="content-img" key={id}>
+              <img src={img} className="fit-img" alt={alt_description} />
             </div>
           );
         })}
